@@ -4,13 +4,13 @@ using UnityEngine;
 
 public class Approaching : StateMachineBehaviour
 {
-    Movement moves;
-    BlackBoard blackboard; 
+    Moves moves;
+    BlackBoard blackboard;
 
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        moves = animator.GetComponent<Movement>(); 
-        blackboard = animator.GetComponent<BlackBoard>();        
+        moves = animator.GetComponent<Moves>();
+        blackboard = animator.GetComponent<BlackBoard>();
         animator.GetComponent<UnityEngine.AI.NavMeshAgent>().speed = 2f;
         moves.Seek(blackboard.treasure.transform.position);
     }
@@ -25,9 +25,9 @@ public class Approaching : StateMachineBehaviour
         }
         else
             if (Vector3.Distance(blackboard.cop.position, blackboard.treasure.transform.position) < blackboard.dist2Steal)
-            {
-                animator.GetComponent<UnityEngine.AI.NavMeshAgent>().speed = 1f;
-                animator.SetTrigger("near");
-            };
+        {
+            animator.GetComponent<UnityEngine.AI.NavMeshAgent>().speed = 1f;
+            animator.SetTrigger("near");
+        };
     }
 }

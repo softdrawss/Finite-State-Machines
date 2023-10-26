@@ -8,7 +8,7 @@ public class Hiding : StateMachineBehaviour
 
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        moves = animator.GetComponent<Moves>();         
+        moves = animator.GetComponent<Moves>();
     }
 
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)

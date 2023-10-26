@@ -5,12 +5,12 @@ using UnityEngine;
 public class Wandering : StateMachineBehaviour
 {
     Moves moves;
-    BlackBoard blackboard; 
+    BlackBoard blackboard;
 
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        moves = animator.GetComponent<Moves>(); 
-        blackboard = animator.GetComponent<BlackBoard>();        
+        moves = animator.GetComponent<Moves>();
+        blackboard = animator.GetComponent<BlackBoard>();
     }
 
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
