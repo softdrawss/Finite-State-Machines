@@ -67,13 +67,11 @@ public class Moves : MonoBehaviour
         float wanderDistance = 10;
         float wanderJitter = 1;
 
-
         wanderTarget += new Vector3(Random.Range(-1.0f, 1.0f) * wanderJitter,
                                         0,
                                         Random.Range(-1.0f, 1.0f) * wanderJitter);
         wanderTarget.Normalize();
         wanderTarget *= wanderRadius;
-
 
         Vector3 targetLocal = wanderTarget + new Vector3(0, 0, wanderDistance);
         Vector3 targetWorld = this.gameObject.transform.InverseTransformVector(targetLocal);
@@ -116,6 +114,38 @@ public class Moves : MonoBehaviour
 
 
         Seek(info.point + chosenDir.normalized);
+
+    }
+
+    public Vector3 HideValue()
+    {
+        float dist = Mathf.Infinity;
+        Vector3 chosenSpot = Vector3.zero;
+        Vector3 chosenDir = Vector3.zero;
+        GameObject chosenGO = hidingSpots[0];
+
+        for (int i = 0; i < hidingSpots.Length; i++)
+        {
+            Vector3 hideDir = hidingSpots[i].transform.position - target.transform.position;
+            Vector3 hidePos = hidingSpots[i].transform.position + hideDir.normalized * 100;
+
+            if (Vector3.Distance(target.transform.position, hidePos) < dist)
+            {
+                chosenSpot = hidePos;
+                chosenDir = hideDir;
+                chosenGO = hidingSpots[i];
+                dist = Vector3.Distance(this.transform.position, hidePos);
+            }
+        }
+
+        Collider hideCol = chosenGO.GetComponent<Collider>();
+        Ray backRay = new Ray(chosenSpot, -chosenDir.normalized);
+        RaycastHit info;
+        float distance = 250.0f;
+        hideCol.Raycast(backRay, out info, distance);
+
+
+        return info.point + chosenDir.normalized;
 
     }
 }
