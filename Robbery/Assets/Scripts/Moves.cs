@@ -1,151 +1,53 @@
-/*  Source: 
-    Artificial Intelligence for Beginners
-    Penny de Byl
-    https://learn.unity.com/course/artificial-intelligence-for-beginners
-*/
-
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.AI;
 
 public class Moves : MonoBehaviour
 {
-    public GameObject target;
-    public Collider floor;
-    GameObject[] hidingSpots;
-    NavMeshAgent agent;
+    private float radius = 1;
+    private float offset = 1;
 
-    void Start()
-    {
-        agent = this.GetComponent<NavMeshAgent>();
-        hidingSpots = GameObject.FindGameObjectsWithTag("Hide");
-    }
+    private NavMeshHit hit;
+    private Vector3 tempTarget;
+    private Vector3 worldTarget;
 
-    public void Seek(Vector3 location)
-    {
-        agent.SetDestination(location);
-    }
+    public NavMeshAgent agent;
+    public GameObject objective;
 
-    public void Flee(Vector3 location)
-    {
-        Vector3 fleeVector = location - this.transform.position;
-        agent.SetDestination(this.transform.position - fleeVector);
-    }
+    public GameObject[] obstacles;
 
-    public void Pursue()
-    {
-        Vector3 targetDir = target.transform.position - this.transform.position;
-
-        float relativeHeading = Vector3.Angle(this.transform.forward, this.transform.TransformVector(target.transform.forward));
-
-        float toTarget = Vector3.Angle(this.transform.forward, this.transform.TransformVector(targetDir));
-
-//        if ((toTarget > 90 && relativeHeading < 20) || ds.currentSpeed < 0.01f)
-        if ((toTarget > 90 && relativeHeading < 20))
-        {
-            Seek(target.transform.position);
-            return;
-        }
-
-//        float lookAhead = targetDir.magnitude / (agent.speed + ds.currentSpeed);
-        float lookAhead = targetDir.magnitude / (agent.speed);
-        Seek(target.transform.position + target.transform.forward * lookAhead);
-    }
-
-    public void Evade()
-    {
-        Vector3 targetDir = target.transform.position - this.transform.position;
-//        float lookAhead = targetDir.magnitude / (agent.speed + ds.currentSpeed);
-        float lookAhead = targetDir.magnitude / agent.speed;
-        Flee(target.transform.position + target.transform.forward * lookAhead);
-    }
-
-
-    Vector3 wanderTarget = Vector3.zero;
     public void Wander()
     {
-        float wanderRadius = 10;
-        float wanderDistance = 10;
-        float wanderJitter = 1;
-
-        wanderTarget += new Vector3(Random.Range(-1.0f, 1.0f) * wanderJitter,
-                                        0,
-                                        Random.Range(-1.0f, 1.0f) * wanderJitter);
-        wanderTarget.Normalize();
-        wanderTarget *= wanderRadius;
-
-        Vector3 targetLocal = wanderTarget + new Vector3(0, 0, wanderDistance);
-        Vector3 targetWorld = this.gameObject.transform.InverseTransformVector(targetLocal);
-
-        if (!floor.bounds.Contains(targetWorld))
-        {
-            targetWorld = -transform.position * 0.1f;
-
-        };
-
-        Seek(targetWorld);
+        tempTarget = Random.insideUnitCircle * radius;
+        tempTarget += new Vector3(0, 0, offset);
+        worldTarget = transform.TransformPoint(tempTarget);
+        worldTarget.y = 0f;
+        if (NavMesh.SamplePosition(worldTarget, out hit, 1.0f, NavMesh.AllAreas)) agent.destination = hit.position;
     }
 
-    public void Hide()
+    public void Seek(Vector3 position)
     {
-        float dist = Mathf.Infinity;
-        Vector3 chosenSpot = Vector3.zero;
-        Vector3 chosenDir = Vector3.zero;
-        GameObject chosenGO = hidingSpots[0];
+        agent.destination = position;
+    }
 
-        for (int i = 0; i < hidingSpots.Length; i++)
+    public Vector3 Hide(NavMeshAgent hideFrom)
+    {
+        GameObject closestObj = null;
+        float closestDist = -1;
+        foreach (GameObject item in obstacles)
         {
-            Vector3 hideDir = hidingSpots[i].transform.position - target.transform.position;
-            Vector3 hidePos = hidingSpots[i].transform.position + hideDir.normalized * 100;
-
-            if (Vector3.Distance(target.transform.position, hidePos) < dist)
+            float temp = Vector3.Distance(hideFrom.transform.position, item.transform.position);
+            if (closestDist == -1 || temp < closestDist)
             {
-                chosenSpot = hidePos;
-                chosenDir = hideDir;
-                chosenGO = hidingSpots[i];
-                dist = Vector3.Distance(this.transform.position, hidePos);
+                closestObj = item;
+                closestDist = temp;
             }
         }
 
-        Collider hideCol = chosenGO.GetComponent<Collider>();
-        Ray backRay = new Ray(chosenSpot, -chosenDir.normalized);
-        RaycastHit info;
-        float distance = 250.0f;
-        hideCol.Raycast(backRay, out info, distance);
+        // Compute position at the other side of closest object from police
+        float RelDist = 1.65f / closestDist;
+        Vector3 lerpPoint = Vector3.Lerp(closestObj.transform.position, hideFrom.transform.position, RelDist);
+        //agent.destination = closestObj.transform.position + (closestObj.transform.position - lerpPoint);
 
-
-        Seek(info.point + chosenDir.normalized);
-
-    }
-
-    public Vector3 HideValue()
-    {
-        float dist = Mathf.Infinity;
-        Vector3 chosenSpot = Vector3.zero;
-        Vector3 chosenDir = Vector3.zero;
-        GameObject chosenGO = hidingSpots[0];
-
-        for (int i = 0; i < hidingSpots.Length; i++)
-        {
-            Vector3 hideDir = hidingSpots[i].transform.position - target.transform.position;
-            Vector3 hidePos = hidingSpots[i].transform.position + hideDir.normalized * 100;
-
-            if (Vector3.Distance(target.transform.position, hidePos) < dist)
-            {
-                chosenSpot = hidePos;
-                chosenDir = hideDir;
-                chosenGO = hidingSpots[i];
-                dist = Vector3.Distance(this.transform.position, hidePos);
-            }
-        }
-
-        Collider hideCol = chosenGO.GetComponent<Collider>();
-        Ray backRay = new Ray(chosenSpot, -chosenDir.normalized);
-        RaycastHit info;
-        float distance = 250.0f;
-        hideCol.Raycast(backRay, out info, distance);
-
-
-        return info.point + chosenDir.normalized;
-
+        return closestObj.transform.position + (closestObj.transform.position - lerpPoint);
     }
 }
